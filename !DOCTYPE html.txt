@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TFA Quizzez, by Antonio Esposito</title>
+  <style>
+    /* Stili CSS integrati */
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      text-align: center;
+      margin: 20px;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 5px;
+    }
+    .hidden {
+      display: none;
+    }
+    h1, h2, h3 {
+      color: #333;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 10px;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .option {
+      margin: 10px 0;
+      text-align: left;
+    }
+    input[type="text"] {
+      padding: 8px;
+      font-size: 16px;
+      width: 80%;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Sezione di benvenuto -->
+  <div class="container" id="welcome-section">
+    <h1>TFA Quizzez</h1>
+    <h3>by Antonio Esposito</h3>
+    <p>Inserisci il tuo nome:</p>
+    <input type="text" id="userName" placeholder="Il tuo nome" required>
+    <p>Sei disposto/a a dedicare una parte del tuo tempo per concentrarti e rispondere ai quesiti, così da ottenere migliori risultati nella tua performance e conoscenza?</p>
+    <button id="startBtn">Inizia il Quiz</button>
+  </div>
+
+  <!-- Sezione del quiz -->
+  <div class="container hidden" id="quiz-section">
+    <div id="quiz-content"></div>
+    <button id="nextBtn" style="display:none;">Prossima Domanda</button>
+  </div>
+
+  <!-- Sezione dei risultati -->
+  <div class="container hidden" id="result-section">
+    <h2>Risultati del Quiz</h2>
+    <div id="result-details"></div>
+    <button id="restartBtn">Ricomincia il Quiz</button>
+  </div>
+
+  <script>
+    // Funzione per mescolare un array (algoritmo di Fisher–Yates; Fisher e Yates, 1948)
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    // Array di domande esemplificative (per una versione completa, includi tutte le domande del documento)
+    const questions = [
+      {
+        question: "1. La predisposizione del PEI è di competenza:",
+        options: [
+          "Del Dirigente Scolastico",
+          "Del GLO",
+          "Del Consiglio di Classe",
+          "Del team docenti"
+        ],
+        correct: "Del Dirigente Scolastico"
+      },
+      {
+        question: "2. Con l'acronimo PDV si intende:",
+        options: [
+          "Piano Di Valutazione",
+          "Progetto di vita",
+          "Piano Didattico Verticale",
+          "Programmazione Didattica Valoriale"
+        ],
+        correct: "Progetto di vita"
+      },
+      {
+        question: "3. L'ICF è stato introdotto nel:",
+        options: [
+          "1999",
+          "2000",
+          "2001",
+          "2002"
+        ],
+        correct: "2001"
+      },
+      {
+        question: "4. ICF è un modello:",
+        options: [
+          "Medico-sanitario",
+          "Bio-psico-sociale",
+          "Socio-pedagogico",
+          "Clinico-riabilitativo"
+        ],
+        correct: "Bio-psico-sociale"
+      },
+      {
+        question: "5. Acronimo di ICF:",
+        options: [
+          "International Classification of Functional disability and health",
+          "International Classification of Functioning disability and health",
+          "International Codex of Functional disability and health",
+          "International Classification of Functional diseases and health"
+        ],
+        correct: "International Classification of Functional disability and health"
+      }
+    ];
+
+    // Variabili di stato della sessione quiz
+    let currentQuestionIndex = 0;
+    let correctCount = 0;
+    let userAnswers = [];
+    let shuffledQuestions = [];
+
+    // Riferimenti agli elementi del DOM
+    const welcomeSection = document.getElementById('welcome-section');
+    const quizSection = document.getElementById('quiz-section');
+    const resultSection = document.getElementById('result-section');
+    const quizContent = document.getElementById('quiz-content');
+    const nextBtn = document.getElementById('nextBtn');
+    const resultDetails = document.getElementById('result-details');
+    const startBtn = document.getElementById('startBtn');
+    const restartBtn = document.getElementById('restartBtn');
+
+    // Gestione degli eventi
+    startBtn.addEventListener('click', startQuiz);
+    nextBtn.addEventListener('click', submitAnswer);
+    restartBtn.addEventListener('click', restartQuiz);
+
+    function startQuiz() {
+      const userName = document.getElementById('userName').value.trim();
+      if (userName === "") {
+        alert("Per favore, inserisci il tuo nome.");
+        return;
+      }
+      // Inizializza le variabili per la sessione
+      currentQuestionIndex = 0;
+      correctCount = 0;
+      userAnswers = [];
+      // Mescola le domande in modo casuale
+      shuffledQuestions = shuffle([...questions]);
+      // Passa dalla sezione di benvenuto a quella del quiz
+      welcomeSection.classList.add('hidden');
+      quizSection.classList.remove('hidden');
+      displayQuestion();
+    }
+
+    function displayQuestion() {
+      // Pulisce il contenuto e nasconde il pulsante "Prossima Domanda"
+      quizContent.innerHTML = "";
+      nextBtn.style.display = "none";
+
+      if (currentQuestionIndex < shuffledQuestions.length) {
+        const currentQuestion = shuffledQuestions[currentQuestionIndex];
+        // Visualizza il testo della domanda
+        const questionElement = document.createElement('div');
+        questionElement.innerHTML = `<h3>${currentQuestion.question}</h3>`;
+        quizContent.appendChild(questionElement);
+
+        // Mescola le opzioni per evitare un ordine fisso
+        const options = shuffle([...currentQuestion.options]);
+        options.forEach(option => {
+          const optionDiv = document.createElement('div');
+          optionDiv.classList.add('option');
+          optionDiv.innerHTML = `<input type="radio" name="option" value="${option}"> ${option}`;
+          quizContent.appendChild(optionDiv);
+        });
+
+        // Visualizza il pulsante per confermare la risposta
+        nextBtn.style.display = "block";
+      } else {
+        // Se non ci sono più domande, mostra i risultati finali
+        showResults();
+      }
+    }
+
+    function submitAnswer() {
+      const selectedOption = document.querySelector('input[name="option"]:checked');
+      if (!selectedOption) {
+        alert("Per favore, seleziona una risposta.");
+        return;
+      }
+      const answer = selectedOption.value;
+      const currentQuestion = shuffledQuestions[currentQuestionIndex];
+
+      // Registra la risposta data dall'utente
+      userAnswers.push({
+        question: currentQuestion.question,
+        selected: answer,
+        correct: currentQuestion.correct,
+        isCorrect: answer === currentQuestion.correct
+      });
+
+      if (answer === currentQuestion.correct) {
+        correctCount++;
+      }
+
+      currentQuestionIndex++;
+      displayQuestion();
+    }
+
+    function showResults() {
+      // Nasconde la sezione del quiz e mostra quella dei risultati
+      quizSection.classList.add('hidden');
+      resultSection.classList.remove('hidden');
+      const total = shuffledQuestions.length;
+      const percentage = Math.round((correctCount / total) * 100);
+
+      let message = `<p>Hai risposto correttamente a ${correctCount} su ${total} domande.</p>`;
+      message += `<p>Percentuale di successo: ${percentage}%</p>`;
+      if (percentage >= 80) {
+        message += `<p><strong>Bravo/a, sei preparato/a! Il tuo impegno ti ripaga! Continua così!</strong></p>`;
+      }
+      resultDetails.innerHTML = message;
+    }
+
+    function restartQuiz() {
+      // Ripristina la sessione e torna alla sezione di benvenuto
+      resultSection.classList.add('hidden');
+      welcomeSection.classList.remove('hidden');
+      document.getElementById('userName').value = "";
+    }
+  </script>
+</body>
+</html>
